@@ -1,0 +1,300 @@
+<html>
+	<head>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+		<style>
+			h1 {
+				text-align: center;
+			}
+
+			.container {
+				margin: 0 auto;
+				padding: 60px 20%;
+			}
+
+			figure {
+				text-align: center;
+			}
+
+			img {
+				display: inline-block;
+			}
+
+			body {
+				font-family: 'Inter', sans-serif;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>CS184/284A Spring 2025 Homework 1 Write-Up</h1>
+			<div style="text-align: center;">Name: Alexander Waldman </div>
+
+			<br>
+
+			Link to webpage: <a href="https://cal-cs184.github.io/hw-webpages-su25-awaldman0/hw1/index.html">cal-cs184.github.io/hw-webpages-su25-awaldman0/hw1/index.html</a>
+
+			<br>
+
+			Link to GitHub repository: <a href="https://github.com/cal-cs184/hw-rasterizer-swiss-cheese">github.com/cal-cs184/hw-rasterizer-swiss-cheese</a>
+
+			<!--
+	We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
+	-->
+
+			<h2>Overview</h2>
+			<p>In this homework, I implemented many important features of a software rasterizer, including drawing triangles, antialiasing via supersampling, transformations, interpolation within a triangle via barycentric coordinates, texture mapping, and various methods of pixel sampling and level sampling to improve how my program handles textures. Considering the relative simplicity of what I've built, I'm pretty suprised at how powerful/capable my rasterizer is, mainly when it comes to the effectiveness of the antialiasing techniques I implemented. I've gained a much deeper understanding of how geometry is represented in code and how computers can be leveraged to do the heavy lifting in the rasterization process. More specifically, I'm impressed when it comes to all of the interpolation that is done in order to represent things like colors and textures in a triangle. Above all else, I'm shocked at the speed of computers and the sheer number of operations per second being done to display an image on screen, especially as you increase the number of samples per pixel. I found myself very intrigued by the whole texturing process and the different methods of sampling texels and mipmap levels. I'd love to continue exploring that topic as the class continues and see how all of the concepts I've learned extend to 3D.</p>
+			<h2>Task 1: Drawing Single-Color Triangles</h2>
+			When rasterizing triangles for this task, my goal was to take point data and appropriately translate it into graphical data that appears on screen. In doing so, I would use the color data passed into <code>RasterizerImp::rasterize_triangle()</code> to fill in
+			the triangle I was working with. While rasterizing a single triangle does not look very impressive, repeated calls to the function allows me to display a great deal of triangles on screen, giving my rasterizer the ability to represent fairly intricate and
+			complex geometry.
+
+			In general, my triangle rasterization algorithm works by first sampling the center of each pixel within the bouding box of the triangle. If the center of the pixel lies in the triangle, I draw it to the screen.
+			In detail, the algorithm works as follows:
+
+			<ol>
+				<li>
+					When checking if a point lies within a triangle, my algorithm assumes the points <code>(x0, y0), (x1, y1),</code> and <code>(x2, y2)</code> are in counterclockwise winding order. Therefore, I need to ensure the x and y values passed into the function are in counterclockwise order by the time I do any bounds checking. I do this by creating two vectors, one between <code>(x0, y0)</code> and <code>(x1, y1)</code> and the other bewteen <code>(x1, y1)</code> and <code>(x2, y2)</code> and computing the cross product.
+					If the cross product is negative, the point data is in clockwise order, in which case I swap the values of <code>(x1, y1) </code> and <code>(x2, y2)</code> to ensure a counterclockwise winding order.
+				</li>
+				<li>Define a vector for each side of the triangle and its corresponding normal vector</li>
+				<li>Among the x and y values passed into the function, find the smallest and largest x and y values. Then take the <code>floor()</code> of those values and add 0.5, which gives us the coordinates of the center of each pixel that defines the triangle's bounding box.</li>
+				<li>Iterate through each pixel in the bounding box, checking if the center of the current pixel is in the triangle by calculating the dot product of the vector bewteen the "first" point in each side of the triangle and the current coordinate with its cooresponding normal vector.</li>
+				<li>If the current point lies on screen and he dot product is greater than or equal to 0 (to ensure we rasterize the edges in addition to interior points) for all three sides, then we draw it on screen.</li>
+			</ol>
+
+			My algorithm is no worse than one that checks each sample within the bounding box of the triangle (since that is exactly how it works), but it lacks certain optimizations that could improve performance like tiled triangle traversal.
+
+			Pictured below is a <i>png</i> screenshot of my rasterizer displaying <i>basic/test4.svg</i> with the default viewing parameters with the pixel inspector hovering over an area close to the corner of a very thin triangle.
+
+			<figure>
+				<img src="./images/screenshot_7-7_20-5-30.png" alt="basic/test4.svg" style="width:400px" />
+				<figcaption>Rasterization of <i>basic/test4.svg</i> without utilizing any antialiasing techniques.</figcaption>
+			</figure>
+
+			As you can see, our image is suffering from jaggies, and even leaves some pixels blank where the triangle does quite pass through the center of a pixel. This kind of aliasing is occuring because we only sample the <b>center</b> of each pixel when rasterizing, not allowing us to represent the geometry in an accurate or appealing way.
+
+
+			<h2>Task 2: Antialiasing by Supersampling</h2>
+			In order to remedy the aliasing seen in the screenshot from task 1, I implemented supersampling functionality into the rasterizer. Supersampling works by sampling multiple points <b>within</b> a single pixel and averaging out the results in order to determine a pixel's final color. This way, whether or not a triangle passes through the center of a pixel is no longer the sole factor when it comes to determining how a pixel is colored in. Supersampling is extremely helpful for getting rid of jaggies because it allows you to soften the edges of your geometry by blending edge pixels with those around them. When sampling, pixel/color data is initially stored in the <code>sample_buffer</code> vector before being finalized and put into <code>rgb_framebuffer_target</code> (which contains the data actually drawn to the screen). Since I need to store multiple samples per pixel and have to accomodate multiple potential sampling rates, I had to make some changes to the way my rasterizer manages memory to allow <code>sample_buffer</code> to be resized depending on the current sample rate.
+
+			In order to implement supersampling and support multiple supersampling rates, I did the following:
+
+			<ol>
+				<li>
+					In <code>RasterizerImp::set_sample_rate()</code>, I changed <code>this->sample_rate</code> to equal the rate passed into the fucntion and altered the call to <code>resize()</code> to scale the size of the vector by the rate passed into the function.
+				</li>
+				<li>
+					In <code>RasterizerImp::set_framebuffer_target()</code>, I altered the call to <code>resize()</code> to scale the size of the vector by the rate passed into the function.
+				</li>
+				<li>
+					I left <code>RasterizerImp::clear_buffers()</code> unchanged.
+				</li>
+			</ol>
+
+			Next, I needed to actually implement supersampling functionality, which involved changing my implementation for <code>RasterizerImp::rasterize_triangle()</code> and <code>RasterizerImp::fill_pixel()</code>.
+
+			<p>I made the following changes to <code>RasterizerImp::rasterize_triangle()</code>:</p>
+
+			<ol>
+				<li>
+					Within the nested for loop used to iterate through each pixel in the triangle's bounding box, I added another nested for loop that would perform <code>sqrt(sample_rate) * sqrt(sample_rate)</code> samples at uniformally distributed locations within the current pixel.
+				</li>
+				<li>
+					I defined a variable <i>offset</i> equal to <code>1 / sqrt(this->sample_rate)</code>.
+				</li>
+				<li>
+					For pixel <code>(i, j)</code> and sub-pixel location <code>(k, l)</code> I sampled at <code>(i + (k * offset) + (offset / 2), j + (l * offset) + (offset / 2))</code>, which resulted in evenly distributed samples within the pixel.
+				</li>
+				<li>I performed the sample in-triangle tests as before, making sure to store the result at the proper index of <code>sample_buffer</code>, whose size changed depending on the sample rate</li>
+			</ol>
+
+			<p>Then, I altered <code>RasterizerImp::fill_pixel()</code> to set all of the indices corresponding to a particular pixel in <code>sample_buffer</code> to the same color so that the rasterizer could still render points and lines normally even after all of the samples within a pixel were averaged out.</p>
+
+			<p>Finally, I changed <code>RasterizerImp::resolve_to_framebuffer()</code> such that for each pixel <code>(x, y)</code>, the function iterated through each sub-pixel sample, adding up the red, green, and blue componenets of the color stored at that location in <code>sample_buffer</code>. The function then divides the sums by the number of samples to obtain the average values of the red, green, and blue componenets of a particular pixel. Lastly, these average values are converted to 8-bit values and passed into <code>rgb_framebuffer_target</code>.</p>
+
+			<p>The results of using supersampling in my rasterizer can be seen below, as the edges look much smoother when the sampling rate is higher. Supersampling helps the rasterizer perform much better when it comes to displaying very thin pieces of geometry, as it no longer leaves a pixel totally blank when a triangle does not happen to overlap with its center.</p>
+
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-8_18-23-37.png" width="400px" />
+							<figcaption>Supersample rate 1 per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-8_18-23-39.png" width="400px" />
+							<figcaption>Supersample rate 4 per pixel</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-8_18-23-41.png" width="400px" />
+							<figcaption>Supersample rate 9 per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-8_18-23-43.png" width="400px" />
+							<figcaption>Supersample rate 16 per pixel</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<h2>Task 3: Transforms</h2>
+			After properly implementing transformations, I was able to employ scaling, translation, and rotation operations to alter <i>robot.svg</i> and create something new. I decided to try to make cubeman do some yoga, which I figured would require using all of the transformations I just coded in order to make the pose look right. The screenshot below depicts cubeman in tree pose.
+
+			<figure>
+				<img src="./images/screenshot_7-8_19-48-41.png" width="400px" />
+				<figcaption>Cubeman doing yoga</figcaption>
+			</figure>
+
+			<h2>Task 4: Barycentric coordinates</h2>
+			While having the ability to draw single-color triangles is nice, being able to represent a wide range of values (whether it be color data, texture data, normals, etc.) within a single triangle is very imporant in computer graphics. Up until now, my rasterizer was not equipped to handle that. I implemented this functionality by associating color data (in this case) with each vertex in a triangle and used interpolation to inform the rasterizer how to color all of the other pixels in the triangle. Smooth interpolation was achieved through the use of barycentric coordinates.
+
+			In the barycentric coordinate system, each vertex in the triangle is associated with a point <code>(&alpha;, &beta;, &gamma;)</code>. Vertex A is located at <code>(1, 0, 0)</code>, vertex B is located at <code>(0, 1, 0)</code>, and vertex C is located at <code>(0, 0, 1)</code>. An arbitrary point <code>(&alpha;, &beta;, &gamma;)</code> represents a linear interpolation between all 3 vertices at once, and can be converted back to regular coordinates with the following formula: \( (x, y) = &alpha; * A + &beta; * B + &gamma; * C \), where \( &alpha; + &beta; + &gamma; = 1 \).
+			Likewise, we can use this formula to linearly interpolate color data associated with each vertex \( C<sub>(x, y)</sub> = &alpha; * C<sub>A</sub> + &beta; * C<sub>B</sub> + &gamma; * C<sub>C</sub> \). Values for &alpha;, &beta;, and &gamma; can be derived using the positions of the vertices and the current position using the equations below.
+			<figure>
+				<img src="./images/formulas.png" width="400px" />
+			</figure>
+
+			All I needed to do was apply these formulas for every sample inside a given triangle, allowing me to represent color gradients. As a result, I was able to mostly reuse my implementation from Task 2, being sure to modify the code where I assign a color to the current location in <code>sample_buffer</code>.
+			<figure>
+				<img src="./images/screenshot_7-9_0-18-4.png" width="400px" />
+				<figcaption>Triangle where vertices are colored red, green, and blue respectively</figcaption>
+			</figure>
+			The above image is a good example of how barycentric coordinates can be used to interpolate values within a triangle. When passing the data for this triangle into <code>rasterize_interpolated_color_triangle()</code>, only the vertices had any explicity defined color data, with vertex A, B, and C being colored red, green, and blue respectively. The color for every other pixel is some linear combination of the other three colors, and the use of barycentric coordinates allow for smooth interpolation between all three colors at once. After applying this concept to a single triangle, I was able to rasterize the image below, whose triangles corresponding color data combine to create a color wheel.
+
+			<figure>
+				<img src="./images/screenshot_7-9_0-17-51.png" width="400px" />
+				<figcaption>Rasterization of <i>basic/test7.svg</i> with default viewing parameters and supersampling rate 1</figcaption>
+			</figure>
+
+			<h2>Task 5: "Pixel sampling" for texture mapping</h2>
+			In computer graphics, pixel sampling involves getting color data for a specific pixel by sampling an image/texture at a position that properly cooresponds to the pixels position. When pixel sampling, one must convert between <code>(x, y)</code> position coordinates and <code>(u, v)</code>texture coordinates to ensure that we are sampling the texture at the correct location. In our case, each vertex of a particular triangle is associated with a <code>(u, v)</code> coordinate. It is our job to figure out where to sample the texture for the rest of the point in the triangle. As before, this requires interpolating bewteen the three <code>(u, v)</code> coordinates we are given, so I once again used barycentric coordinates for calculate the proper texture coordinates for each sample. As a result, my solution for this task looks extremely similar to my implementation for task 4. The code for <code>rasterize_textured_triangle</code> largely followed the structure of <code>rasterize_interpolated_color_triangle</code> with two key differences:
+
+			<ol>
+				<li>
+					When swapping the values of <code>(x1, y1) </code> and <code>(x2, y2)</code> if vertices are passed into the fucntion in clockwise winding order, it is extremely important to also swap the values for <code>(u1, v1) </code> and <code>(u2, v2)</code>. If this is not done, the texture will be mirrored for triangles whose vertices were originally in clockwise winding order, leading to a very ugly "sharding" effect a textured image. Upon realizing this, I updated my implementation of <code>rasterize_interpolated_color_triangle</code> to properly swap colors around in the event of a clockwise winding order, as that would leading to similar errors that I was lucky enough to not run into yet.
+				</li>
+				<li>
+					When assigning a color to the current sample, I needed to call either <code>sample_nearest</code> or <code>sample_bilinear</code> depending on the current pixel sampling mode.
+				</li>
+			</ol>
+
+			This rasterizer supports two different ways of sampling pixels, nearest-neighbor and bilinear sampling. Since the mapping of screen-sapce to texture space is rarely 1:1 and we need to support things like sub-pixel sampling, <code>(u, v)</code> texture coordinates that we derive from screen-space positions are very unlikely to be whole numbers. We need whole numbers in order to get color data from the <code>texels</code> vector, however, so we need to find a way to convert our floating point <code>(u, v)</code> values to color data. The first method, which I implemented in <code>sample_nearest</code> simply rounds u and v to the closest whole number and uses them to sample from the texture. This works, but it can lead to a more pixelated look in the final image. The other method, which I implemented in <code>sample_linear</code>, first samples the four texels <b>closest</b> to u and v before performing a series of linear interpolations to determine the appropriate color at <code>(u, v)</code>. While more computationally expensive, this results in a smoother image than nearest neighbor pixel sampling.
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-10_0-41-0.png" width="400px" />
+							<figcaption>Swirled Cal seal with nearest-pixel sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-10_0-41-1.png" width="400px" />
+							<figcaption>Swirled Cal seal with bilinear sampling</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<p>The difference between the two pixel sampling methods is extremely apparant in the images above. Bilinear sampling is clearly preferable in this case, as it makes the text on the seal much more legible by smoothing out color differences. </p>
+
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-10_0-35-38.png" width="400px" />
+							<figcaption>Nearest sampling at 1 sample per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-10_0-35-46.png" width="400px" />
+							<figcaption>Nearest sampling at 16 samples per pixel</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-10_0-36-13.png" width="400px" />
+							<figcaption>Bilinear sampling at 1 sample per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-10_0-36-21.png" width="400px" />
+							<figcaption>Bilinear sampling at 16 samples per pixel</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<p>Pictured above are four copies of the same image using different pixel sampling methods and supersampling rates. AT 1 sample per pixel, the differences between nearest-neighbor and bilinear pixel sampling aren't too hard to spot, espectially if you zoom in on the left edge of the campinele. When we increase the number of samples per pixel to 16, however, the difference is nearly imperceptible (even under the pixel inspector), going to show how using a more computationally expensive and "better" pixel sampling method does not always result in noticeably higher quality image. This means that, in certain situations, bilinear pixel sampling may not be worth it over simpler, less precise approaches to texture sampling. In general, We will see large differences bewteen bilinear and nearest neighbor sampling when the number of samples per pixel is small because bilinear filtering allows us to represent the color at a given <code>(u, v)</code> coordinate better than nearest neighbor due to the interpolation that takes place in bilinear filtering. At higher sampling rates, nearest neightbor interpolation will wind up sampling mulitple different texels before the color values are averaged out in the framebuffer, mimicking the smoothing effect bilinear interpolation tends to have. As a result, the differences bewteen the two methods are very difficult to spot at high smapling rates.</p>
+
+			<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
+			When sampling textures in computer graphics, there will most likely not be a 1:1 pixel to texel mapping. This can lead to undesirable outcomes in situations where a low resolution texture is being sampled at a high rate (too blurry) or a high resolution texture is being sampled at a low rate (leads to aliasing). This problem can be especially difficult when the exact same texture is being sampled by triangles at different distances from the camera. One way of solving is this is by creating a mipmap composed of the different versions of same texture, each one sampled at a lower resolution than the last. When it comes time to texturing a specific pixel, one can calculate the local sampling rate by finding the rate of change of u and v around the current pixel. You can then use the formulas below to calculate the mipmap level that corresponds to the local sampling rate.
+			<figure>
+				<img src="./images/formulas2.png" width="400px" />
+			</figure>
+			From here, you can implement things like nearest neighbor or linear interpolation to help the rasterizer choose the correct resolution level when sampling a texture. This is called level sampling. In order to implement this myself, I first needed to edit <code>rasterize_textured_triangle</code> to call <code>sample</code>, a more generalized texture sampling function that would take care of level sampling as well as pixel sampling for our texture. I also had to calculate the uv barycentric coordinates of <code>(x+1,y)</code> and <code>(x,y+1)</code> in <code>rasterize_textured_triangle</code>, which were crucial for finding the proper mipmap level. I then implemented <code>get_level</code> (a helper function for <code>sample</code>) according to the spec, which would perform the math shown above to find the mipmap level D that corresponds to a particular <code>(u, v)</code> coordinate. Lastly, I implemented <code>sample</code>, which makes a call to the appropriate sampling function using the correct level given the currently selected pixel sampling and level sampling methods.
+
+			<p>The three leveling methods I implemented are the following</p>
+			<ol>
+				<li>
+					L_ZERO: sample from the 0th level of the mipmap
+				</li>
+				<li>
+					L_NEAREST: round the level returned by <code>get_level</code> to the nearest integer and use that to sample the mipmap.
+				</li>
+				<li>
+					L_LINEAR: sample the two levels closest to the value return by <code>get_level</code> and linearly interpolate bewteen them to determine the color of a pixel.
+				</li>
+			</ol>
+			Pictured below are examples of all three methods with nearest pixel sampling and a supersampling rate of 1.
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_18-39-1.png" width="400px" />
+							<figcaption>L_ZERO level sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_18-39-2.png" width="400px" />
+							<figcaption>L_NEAREST level sampling</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_18-39-3.png" width="400px" />
+							<figcaption>L_LINEAR level sampling</figcaption>
+						</td>
+					</tr>
+
+				</table>
+			</div>
+
+			<p>Now that my rasterizer is capable of producing textured images with a variety of pixel sampling/level sampling methods at multiple numbers of samples per pixel, it is worth mentioning the advantages and tradeoffs of using various combinations of these antialiasing techniques. When it comes to speed it's pretty clear that having more samples per pixel and using interpolation based pixel and level sampling methods are simply not as fast as the other options. A high supersampling rate means the rasterizer needs to iterate through and <b>store</b> a mich higher volume of samples, which clearly causes a slowdown and eats up more memory since the size of <code>sample_buffer</code> needs to be scaled accordingly. Bilinear pixel and linear level sampling are slower than their nearest-neighbor counterparts because many more calculations need to be performed per-pixel to interpolate between values. Despite the slowdown, interpolation-based sampling methods clearly give the user more antialiasing power, as they can offer a more accurate/smooth approximation of the color at a specific coordinate when compared to nearest neighbor sampling (as seen in Part 5). When used in conjunction, high supersampling rates and bilinear pixel/level sampling give the user a ton of antialiasing power, but one must be wary of things like overblur, where an image is antialiased to such an extent that the whole image loses detail. Using a picture of Custer Gallatin National Forest (<a href="https://insideclimatenews.org/news/07042023/logging-deforestation-custer-gallatin-national-forest/">source</a>), I will test four different combinations of pixel and level sampling methods and compare their performances (supersample rate 1 per pixel).</p>
+			
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_19-19-39.png" width="400px" />
+							<figcaption>Nearest level sampling and nearest pixel sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_19-19-48.png" width="400px" />
+							<figcaption>Nearest level sampling and bilinear pixel sampling</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_19-33-5.png" width="400px" />
+							<figcaption>Linear level sampling and nearest pixel sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="./images/screenshot_7-11_19-33-6.png" width="400px" />
+							<figcaption>Linear level sampling and bilinear pixel sampling (trilinear sampling/texture filtering)</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>When looking at the images above, I find that using linear level sampling and nearest pixel sampling provides the best overall result for this image. Looking at the images that use nearest level sampling, the bourdaries where adjacent mipmap levels are being used is pretty apparant and looks unappealing. If you looks at the center of the image and starts scanning outwards, there are definite jumps in how pixelated the image looks. Each of these jumps represent my rasterizer using a different mipmap level to texture the image. Additionally, the bilinear pixel sampling used in the top right image seems to add a bit of extra blur, making the change in texture resolution especially visible around the edges of the image. Next, we can examine bottom two images, which use linear level sampling. You aren't able to see the transitions bewteen mipmap levels, which is very nice. It seems the image on the bottom right is suffering from a bit of overblur though, which is made evident if you look at the pixel inspector. The image using nearest pixel sampling retains the details of the tops of the trees and the hill in the background but the image using trilinear sampling totally loses those details. As a result, I feel the image that uses linear level sampling and nearest pixel sampling does the best job representing this forest landscape. </p>
+		</div>
+	</body>
+</html>

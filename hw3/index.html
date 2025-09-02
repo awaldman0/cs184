@@ -1,0 +1,436 @@
+<html>
+	<head>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+		<style>
+			h1 {
+				text-align: center;
+			}
+
+			.container {
+				margin: 0 auto;
+				padding: 60px 20%;
+			}
+
+			figure {
+				text-align: center;
+			}
+
+			img {
+				display: inline-block;
+			}
+
+			body {
+				font-family: 'Inter', sans-serif;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>CS184/284A Spring 2025 Homework 3 Write-Up</h1>
+			<div style="text-align: center;">Name: Alexander Waldman </div>
+
+			<br>
+
+			Link to webpage: <a href="https://cal-cs184.github.io/hw-webpages-su25-awaldman0/hw3/index.html">cal-cs184.github.io/hw-webpages-su25-awaldman0/hw3/index.html</a>
+
+			<br>
+
+			Link to GitHub repository: <a href="https://github.com/cal-cs184/hw-pathtracer-updated-tomatoes">github.com/cal-cs184/hw-pathtracer-updated-tomatoes</a>
+
+			<!--
+	We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
+	-->
+
+			<h2>Overview</h2>
+			In this homework, I implemented several core features of a physically-based renderer that, by the end of the assignment, would be capable of rendering very realistic scenes using a path tracing algorithm. I began the assignment by implementing ray generation and basic ray-primitve intersection tests. Using the ray equation, I implemented the Moller Trumbore algorithm for ray-triangle intersection. Additionally, I applied the quadratic formula to calculate ray-sphere intersection. Next, I worked to implement Bounding Volume Hierarchies, an acceleration structure for ray tracing that partitions 3D space into a quickly traversable tree, allowing for massive speed improvements when calculating ray intersections in scenes with tens of thousands or hundreds of thousands of polygons. I then moved on, adding physically-based lighting to the renderer in the form of direct illumination. From there, I could extend the renderer's lighting capabilities to include indirect illumination as well, allowing me to produce images with incredibly realistic global illumination. Lastly, I worked to implement adaptive sampling, a way to optimize the rendering process by statistically determining when a pixel no longer needs to be sampled to improve/change its appearance. Of all the things I've built in this assignment, I was very impressed at the efficiency a BVH provides in a renderer, taking something that previously needed almost a minute to render to needing less than a tenth of a second. I really enjoyed stepping through the BVH in the visualizer mode, I feel like it really helped me when it came to determining my splitting heuristic. Overall, I'm pretty fascinated by the various optimization techniques employed throughout this assignment, especially the idea of adaptive sampling. I feel like this homework is also very extensible in that I could come back later to implement more interesting/complex features. Unfortunately, I did not have the time to figure out how to implement motion blur effects for extra credit, but I can absolutely see myself coming back to this assignment later to try and code that feature. This homework was definetly more complex than the previous ones, and I wish I had given myself a bit more time to work through each part so that I could avoid late-night debugging sessions, but I also appreciate how many parts of the core rendering loop we got to familiarize ourselves with.  
+			<h2>Part 1: Ray Generation and Scene Intersection</h2>
+			<p>When ray tracing a scene, one must first generate rays to send out from the camera. When these rays collide with geometry, they can be used to calculate a variety of useful data points, including surface normals at the point of intersection and how much light is being emitted/reflected towards the camera. When generating rays, it's crucial to properly convert between camera space and world space to ensure that 1) the origin of each ray is actually within the boundaries of the current pixel we want to raytrace and 2) rays are being properly sent towards the scene (where all of the geometry is) instead of shooting off into an empty section of world space. I handled the logic for this section of part 1 in <code>Camera::generate_ray()</code>. Once rays are sent out from the camera, the next step in the core rendering pipeline is to check for intersections between each ray and the primitives in the scene. As mentioned previously, this step is incredibly important because it allows us to actually engage with the properties of the materials/primitives, which is how ray/path tracing is able to accurately light a scene.</p>
+			<p>I had a few options when it came to choosing an approach for calculating ray-triangle intersection. The first and simplest approach would be to use a point on the triangle and one of its normals to first test if the ray intersect with the plane the triangle lies on. If so, one can then use the <code>t</code> value at the intersection point to derive the coordinates of the intersection in world space. From there, you can do point-in-triangle tests (much like we did in Homework 1) to determine if the ray collides with a triangle. The second approach is to implement the Moller Trumbore algorithm for ray-triangle intersection presented in lecture. I chose to go with Moller Trumbore for a few reasons, the main one being speed. Compared to the first approach, Moller Trumbore involves fewer division, multiplication, and addition operations. When tracing billions of rays for a single scene, these small optimizations add up. The second main reason for using this algorithm is it derives barycentric coordinates in addition to the <code>t</code> value corresponding to the intersection point on the plane. From there, it's easy to verify if the intersection lies within the triangle by checking if the barycentric coordinates are non-negative. Having barycentric coordinates also allows us to easily interpolate between the triangles vertex normals, which is crucial for smooth shading. Had I chosen to use a different strategy for ray-triangle intersection, finding barycentric coordinates in 3D would prove to be a more difficult and computationally expensive task. I implemented Moller Trumbore in <code>Triangle::intersect</code> and <code>Triangle::has_intersection</code> as presented in lecture, perfroming a few additional checks to ensure the intersection point is located at a valid place along the ray. With basic ray-primitive intersection in place, I rendered the following images with normal shading.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part1_1.png" width="400px" />
+							<figcaption>dae/sky/CBgems.dae</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part1_2.png" width="400px" />
+							<figcaption>dae/sky/CBcoil.dae</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part1_3.png" width="400px" />
+							<figcaption>dae/meshedit/teapot.dae</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part1_4.png" width="400px" />
+							<figcaption>dae/keenan/banana.dae</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<h2>Part 2: Bounding Volume Hierarchy</h2>
+			<p>While ray intersection works fine for simple scenes with very little geometry, each intersection test iterates through every single primitive in order to determine if an intersection takes place, which is highly inefficient. This makes it all but impossible to render scenes with high polygon counts. One way to improve the performance of intersection tests is to partition 3D space with a Bounding Volume Hierarchy (BVH), a tree data structure that helps us only perfrom intersection tests in areas that a ray is actually traveling through. In order to improve the performance of my renderer for complicated scenes, I constucted a BVH in <code>BVHAccel::construct_bvh()</code>, which works as follows:</p>
+			<ol>
+				<li>Iterate between <code>start</code> and <code>end</code>, expanding <code>bbox</code> to include every primitive in the list. As you're iterating, increment a variable <code>size</code> to keep track of how many primitive are in the current node.</li>
+				<li>If <code>size <= max_leaf_size</code>, create a leaf node by setting <code>node->start = start</code>, <code>node->end = end</code>, <code>node->l = NULL</code>, and <code>node->r = NULL</code></li>
+				<li>
+					If not, calculate the longest axis by finding <code>max(bbox.extent.x, max(bbox.extent.y, bbox.extent.z))</code>. From there, sort primitives bewteen <code>start</code> and <code>end</code> by their centroids along chosen axis. For example, if the x axis is the logest axis, call
+<pre>
+<code>
+	if (largest_extent == bbox.extent.x) {
+		sort(start, end, [](Primitive* a, Primitive* b) {
+			return a->get_bbox().centroid().x < b->get_bbox().centroid().x; });
+	}
+</code>
+</pre>
+				</li>
+				<li>From there, split around the median primitive and recursively call <code>construct_bvh()</code> by setting <code>node->l = construct_bvh(start, start + (size / 2), max_leaf_size)</code> and <code>node->r = construct_bvh(start + (size / 2), end, max_leaf_size)</code></li>
+			</ol>
+			<p>When it came to my splitting heuristic, I wanted to ensure that the BVH was as balanced as possible, meaning traversing the tree would be efficient regardless of the ray's direction in 3D space. Splitting along the longest axis helps ensure that primitives stored in leaf nodes will also be close to each other in world space. This means that if a ray intersects the bounding box of a leaf node, it has a high liklihood of intersecting one of the polugons stored there. If I deciced to, say,  split along the x axis every time, I could very well end up with leaf nodes containing primitives that are very far away from each other on the x and y axes, leading to sparsely populated bounding boxes where a ray is unlikely to intersect with a primitive even when it intersects the bounding box. Additionally, the choice to split along the median primitive instead of something like the average was done to keep the tree balanced. With BVH construction/traversal implemented in my renderer, I could now render very large .dae files with normal shading very quickly.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part2_1.png" width="400px" />
+							<figcaption>64,618 primitives, 0.0728 seconds to render</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part2_2.png" width="400px" />
+							<figcaption>100,012 primitives, 0.1625 seconds to render</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part2_3.png" width="400px" />
+							<figcaption>196,608 primitives, 0.1698 seconds to render</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part2_4.png" width="400px" />
+							<figcaption>240,326 primitives, 0.1948 seconds to render</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>To explore how much a BVH improves rendering performance, I examined rendering times for three moderately complex .dae files with and without BVH acceleration to see how they compare. For each .dae file, I rendered an image at 800x600 resolution with and without BVH acceleration three times to get a sense for the average performance. For meshedit/cow.dae (5856 primitives), I could render an image in about 0.089 seconds with BVH acceleration and about 25.87 seconds without BVH acceleration. For sky/CBcoil.dae (7884 primitives), I could render an image in about 0.10 seconds with BVH acceleration and about 45.53 seconds without BVH acceleration. Lastly, for meshedit/beetle.dae (7558 primitives), I could render an image in about 0.079 seconds with BVH acceleration and about 38.71 seconds without BVH acceleration. Across those 3 files, I saw an average speedup of about 412x. You'll notice that having fewer primitives does not always mean something will render faster with BVH, as meshedit/beetle.dae rendered faster than meshedit/cow.dae despite having 1702 more primitives. I imagine this has something to do with the density of polygons in the mesh, although I cannot say for sure. Regardless, we can see that BVH acceleration affords us the ability to render extremely complicated scenes very quickly, and will serve a crucial role later on as renders become increasingly computationally expensive.</p>
+
+			<h2>Part 3: Direct Illumination</h2>
+			<p>The next thing to implement in my renderer was direct illumination, where we begine to simulate light transport in the scene. I implemented two methods of direct lighting for part 4, uniform hemisphere sampling and importance sampling. Direct lighting works by using a Monte Carlo estimator to approximate the amount of light arriving at a point. I wrote my implementation of direct lighting with uniform hemisphere sampling in <code>estimate_direct_lighting_hemisphere</code>, and it works as follows.</p>
+			<ol>
+				<li>Enter a for loop that executes <code>num_samples</code> iterations.</li>
+				<li>Sample an incoming ray direction <code>w_j</code> in object space by calling <code>hemisphereSampler->get_sample()</code></li>
+				<li>Create a ray <code>test_ray</code> with origin <code>hit_p</code> and direction <code>o2w * w_j</code> (since <code>hit_p</code> is in world space). Set <code>min_t</code> to <code>EPS_F</code>.</li>
+				<li>Create a new intersection object <code>test_intersection</code></li>
+				<li>
+					If <code>this->bvh->intersect(test_ray, &test_intersection)</code>
+					<ul>
+						<li>Get the amount of light being emitted by the piece of geometry <code>L_in</code> by calling <code>test_intersection.primitive->get_bsdf()->get_emission();</code></li>
+						<li>Set <code>Vector3D reflected_proportion = isect.bsdf->f(w_j, w_out)</code> to find the proportion of incoming light the primitive <code>isect->primitive</code> reflects</li>
+						<li> Set <code>Vector3D cos_j = dot(w_j, w2o * isect.n)</code> to get the cosine of the angle bewteen the incoming light ray and the normal at the intersection point in world space.</li>
+						<li>Lastly, increment <code>L_out</code> by <code>(reflected_proportion * L_in * cos_j) / (1 / PI)</code>, with 1/PI being the pdf of the uniform hemisphere.</li>
+					</ul>
+				</li>
+				<li>After exiting the for loop, normalize <code>L_out</code> by dividing by <code>num_samples</code> and return it.</li>
+			</ol>
+			<p>After implementing direct illumination with uniform hemisphere sampling, I moved on to write the code for direct lighting via importance sampling, which I wrote in <code>estimate_direct_lighting_importance</code></p>
+			<ol>
+				<li>Enter a for loop that iterates through each light in <code>scene->lights</code></li>
+				<li>
+					If the light is a point light, do the following:
+					<ul>
+						<li>Define <code>Vector3D wi</code>, <code>double distToLight</code>, <code>pdf</code>, and <code>Vector3D L_in</code>. Set <code>L_in</code> equal to the output of <code>light->sample_L(hit_p, &wi, &distToLight, &pdf)</code></li>
+						<li>Then, like before, define <code>test_ray</code> with origin <code>hit_p</code> and direction <code>wi</code> (the incoming direction is in world space this time) as well as <code>test_intersection</code>. Set the ray's minimum distance to <code>EPS_F</code> and the max to <code>distToLight</code>.</li>
+						<li>If the ray does not intersect anything bewtween <code>hit_p</code> and the light, increment <code>L_out</code> by <code>(reflected_proportion * L_in * cos_j) / pdf</code></li>
+						<li>Since all samples from a point light will be the same, we do not need to take multiple samples from this light, regardless of the number of light rays specified in the command line</li>
+					</ul>
+				</li>
+
+				<li>
+					If the light is not a point light, do the following:
+					<ul>
+						<li>Define <code>Vector3D L_curr</code> </li>
+						<li>Enter a for loop that performs <code>ns_area_light</code> iterations</li>
+						<li>In each iteration, perform the same steps we did for point lights, except this time increment <code>L_curr</code> by <code>(reflected_proportion * L_in * cos_j) / pdf</code></li>
+						<li>After exiting the for loop, increment <code>L_out</code> by <code>L_curr / ns_area_light</code></li>
+					</ul>
+				</li>
+				<li>return <code>L_out</code></li>
+			</ol>
+
+			<p>With both methods of direct lighting implemented, we can see how they perform lighting a variety of images, each with 64 of samples per pixel and 32 samples per light</p>
+
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part3_1.png" width="400px" />
+							<figcaption>Uniform Hemisphere Sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part3_2.png" width="400px" />
+							<figcaption>Light Sampling</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part3_3.png" width="400px" />
+							<figcaption>Uniform Hemisphere Sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part3_4.png" width="400px" />
+							<figcaption>Light Sampling</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part3_5.png" width="400px" />
+							<figcaption>Uniform Hemisphere Sampling</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part3_6.png" width="400px" />
+							<figcaption>Light Sampling</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>We can see that uniform hemisphere sampling results in a much noisier image than light sampling under the same conditions. This is due to the fact that uniform hemisphere sampling often results in sampling geometry that are not lights (so <code>L_in is (0, 0, 0)</code>), meaning pixels are generally accumulating less light and those that use light sampling. This is especially evident when you compare the brightness of the walls side-by-side. The random nature of uniform hemisphere sampling also results in very uneven lighting, as adjacent pixels may have sampled the light a different number of times. This uneven lighting also results in pretty poor representation of soft shadows. The renderings of dae/sky/CBcoil.dae at the bottom are especially good examples of this. In the rendering that uses light sampling, one can discern the curves of the coil in the shadow and clearly see three dark bands where the light is directly above the coil. In the other rendering, the shadow is a bit of a mess due to all of the noise. The use of light sampling allows for much better representation of light falloff. To further examine how light sampling allows for proper representation of shadows, we can look at renderings of dae/sky/dragon.dae with 1 sample per pixel and different number of light rays per pixel and examine how the fidelity of soft shadows improves as we add more light rays.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part3_7.png" width="400px" />
+							<figcaption>1 light ray</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part3_8.png" width="400px" />
+							<figcaption>4 light rays</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part3_9.png" width="400px" />
+							<figcaption>16 light rays</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part3_10.png" width="400px" />
+							<figcaption>64 light rays</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>As you can see, the noise levels in the first two renderings make it incredibly difficult to spot the shaow cast by the dragon's head and neck. Only when we increase the number of light rays do pieces of geometry have the chance to gather enough light samples to differentiate bewteen areas that are directly lit from those in shadow.</p>
+			<h2>Part 4: Global Illumination</h2>
+			<p>While simulating direct lighting is fascinating, it doesn't quite properly represent how lights work in real life. For example, you'll notice that with direct lighting, the ceiling is completely unlit. To get more realistic lighting, we want to simulate multiple light bounces within our scene, which is called indirect lighting. My implementation for indirect lighting can be found in <code>at_least_one_bounce_radiance()</code> and it works as follows:</p>
+			<p>First, I made a quick change to <code>raytrace_pixel</code>, initializing the depth of newly created rays to <code>max_ray_depth</code>. Then, I moved on to <code>at_least_one_bounce_radiance</code>.</p>
+			<ol>
+				<li>Being that this function will call itself recursively, I began with a couple base cases. If the depth of the current ray is zero, return <code>zero_bounce_radiance(r, isect)</code>. Alternatively, if the depth is one, return <code>one_bounce_radiance(r, isect)</code></li>
+				<li>Define <code>double continuation_prob = 1</code> (important for Russian Roulette later on), <code>Vector3D wi</code>, and <code>double pdf</code>. Then, call <code>isect.bsdf->sample_f(w_out, &wi, &pdf)</code> to take one random sample of a direction based on the BSDF at the current hit point.</li>
+				<li>If <code>isAccumBounces == true</code>, meaning we want to accumulate every light bounce into <code>L_out</code>, increment <code>L_out</code> by <code>one_bounce_radiance(r, isect)</code></li>
+				<li>Next, we define <code>Ray new_ray = Ray(hit_p, o2w * wi)</code>, setting its minimum value <code>EPS_F</code> and its depth value to <code>r.depth - 1</code>. We also define an intersection struct <code>new_intersection</code></li>
+				<li>If <code>new_ray</code> intersects with something else in the scene and <code>coin_flip(continuation_prob)</code> evaluates to true, increment <code>L_out</code> by <code>at_least_one_bounce_radiance(new_ray, new_intersection) * isect.bsdf->f(w_out, wi) * dot(wi, w2o * isect.n) / pdf / continuation_prob</code> as presented in lecture</li>
+				<li>return <code>L_out</code></li>
+			</ol>
+			<p>
+				With indirect lighting now implemented, we can render images with full global lighting! The following images were rendered at 1024 samples per pixel, 8 light samples per area light, and 5 light bounces.
+			</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_1.png" width="400px" />
+							<figcaption>dae/sky/CBspheres_lambertian.dae</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_2.png" width="400px" />
+							<figcaption>dae/sky/CBcoil.dae</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>Since global lighting is a combination of direct and indirect lighting, we can compare what a scene looks like only direct illumination, then only indirect illumination. Since I showed dae/sky/CBspheres_lambertian.dae with full global lighting above, I thought it would be fitting to use that scene to help us compare/contrast.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_3.png" width="400px" />
+							<figcaption>direct illumination only</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_3b.png" width="400px" />
+							<figcaption>indirect illumination only</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>As you can see, direct illumination contributes most of the darker shadows to the combined image, while indirect lighting gives us lighting on the ceiling and realistic looking color bleeding from the walls onto the spheres and the floor. Additionally, indirect illumination contributes when it comes to soft shadows, like those being casted by the spheres onto the walls. We can also utilize the <code>isAccumBounces</code> flag to visualize how much light each individual light bounce contributes to the overall image. Below, the top row of images shows what the 0th, 1st, 2nd, 3rd, 4th, and 5th light bounce look like in isolation when rendering dae/sky/CBbunny.dae, while the bottom row of images shows what the image looks like as we add light bounces together. </p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_4.png" width="135px" />
+							<figcaption>m=0</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_5.png" width="135px" />
+							<figcaption>m=1</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_6.png" width="135px" />
+							<figcaption>m=2</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_7.png" width="135px" />
+							<figcaption>m=3</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_8.png" width="135px" />
+							<figcaption>m=4</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_9.png" width="135px" />
+							<figcaption>m=5</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_10.png" width="135px" />
+							<figcaption>m=0</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_11.png" width="135px" />
+							<figcaption>m=1</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_12.png" width="135px" />
+							<figcaption>m=2</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_13.png" width="135px" />
+							<figcaption>m=3</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_14.png" width="135px" />
+							<figcaption>m=4</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_15.png" width="135px" />
+							<figcaption>m=5</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div></p>
+			<p>The 2nd and 3rd bounces of light are really what bring the rendering to life. The 2nd bounce gives us lighting on the ceiling and some of the darker areas on the wall, giving the image a huge boost when it comes to realism. Additionally, the seconds bounce alleviates the very hard shadows on the underside of the bunny left from the first round of lighting (direct illumination). The contributions of the 3rd bounce of light are a bit more subtle, but if you look at the top row, you can see that the 3rd bounce ends up reflecting a lot of the red and blue from the walls onto the bunny, helping the bunny look more grounded in the scene. Compared to part 3 where we relied solely on direct illumination, we can see that just simulating a couple extra bounces of light bring so much to the overall quality of the image by more accurately portraying the behavior of light in the real world.</p>
+			<p>In real life, however, there are innumerable light bounces happening at all times. It would be computationally infeasible to try to simulate all possible path lengths for light rays in a given scene, but we can implement a technique called Russian Roulette that randomly terminates rays based on an arbitrary continuation probability. In theory, this allows us to simulate any number of path legnths all in one scene. To turn on Russian Roulette path termination, all I needed to do was set the value of  <code>continuation_prob</code> in <code>at_least_one_bounce_radiance()</code> to a suitable value. I chose 0.35, meaning we only execute the execute the recursive step of <code>at_least_one_bounce_radiance()</code> (i.e. keep tracing the ray) with probability 0.35. Below, we can see the effect of this technique when <code>may_ray_depth</code> is set to different values.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_16.png" width="400px" />
+							<figcaption>m=0</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_17.png" width="400px" />
+							<figcaption>m=1</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_18.png" width="400px" />
+							<figcaption>m=2</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_19.png" width="400px" />
+							<figcaption>m=3</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_20.png" width="400px" />
+							<figcaption>m=4</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_21.png" width="400px" />
+							<figcaption>m=100</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p></p>
+			<p>Lastly, we can explore the effect of different sample-per-pixel rates on scenes with global illumination enabled and Russian Roulette path termination in effect. Below, I've rendered dae/sky/wall-e.dae at a variety of sample-per-pixel rates with 4 light rays per area light and a max ray depth of 5.</p>
+			<div style="display: flex; flex-direction: column; align-items: center;">
+				<table style="width: 100%; text-align: center; border-collapse: collapse;">
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_22.png" width="400px" />
+							<figcaption>1 sample per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_23.png" width="400px" />
+							<figcaption>2 samples per pixel</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_24.png" width="400px" />
+							<figcaption>4 samples per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_25.png" width="400px" />
+							<figcaption>8 samples per pixel</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_26.png" width="400px" />
+							<figcaption>16 samples per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_27.png" width="400px" />
+							<figcaption>64 samples per pixel</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td style="text-align: center;">
+							<img src="images/part4_28.png" width="400px" />
+							<figcaption>256 samples per pixel</figcaption>
+						</td>
+						<td style="text-align: center;">
+							<img src="images/part4_29.png" width="400px" />
+							<figcaption>1024 samples per pixel</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p>Unsurprisingly, having a low number of samples per pixel leads to a very noisy image, especially when trying to render complex models like the one above. Using Russian Roulette for these render also contributes a bit of noise due to varying light path lengths from pixel-to-pixel, but the number of samples per pixel is by far the main factor when it comes to image quality. Details like the tread pattern on wall-e's tracks and the internal mechanisms of his wheels are very difficult to make out until we reach 64 or 256 samples per pixel. We're also unable to make out the soft shadows resulting from multiple light bounces in and around wall-e until we render at higher sample rates. There are unquestionable speed advatages when it comes to rendering things out at lower sampling rates, but for a scene like this where all of the viewer's focus lies on the subject, other renders simply cannot match the quality of 1024 samples per pixel.</p>
+			<h2>Part 5: Adaptive Sampling</h2>
+			<p>As is evident from the pictures of wall-e from above, increasing the number of samples per pixel is a surefire way to reduce the amount of noise in the final render. As we increase the number of samples per pixel, we increase the cost of computation for every single pixel on screen, regardless of the geometric complexity of our scene. In practice, a blank wall does not need to be sampled as many times as a complex, high-poly mesh in order to look realistic. One way to avoid this oversampling to use adaptive sampling, a technique that uses the mean and variance of a pixel's color value as the number of samples increases to determine when the pixel has converged, and no longer needs to be sampled. This way, we end up increasing the efficiency of our renderer by only sampling at high rates when it is absolutely necessary. In order to implement adaptive sampling, I needed to modify code I had written in <code>raytrace_pixel()</code> all the way back in part 1. My implementation works as follows:</p>
+			<ol>
+				<li>Before entering the for loop, define <code>float s1 = 0.0</code>, <code>float s2 = 0.0</code>, and <code>int samples_taken</code></li>
+				<li>Every iteration of the for loop, increment <code>s1</code> by the illuminance of the color just sampled, increment <code>s2</code> by the illuminance squared, and set <code>samples_taken = i + 1</code></li>
+				<li>
+					If <code>samples_taken > 1 && samples_taken % samplesPerBatch == 0</code>, calculate whether or not the current pixel has converged by doing the following calculations explained in the spec:
+<pre>
+<code>
+if (samples_taken > 1 && samples_taken % samplesPerBatch == 0) {
+	float mean = s1 / samples_taken;
+	float var = (1 / (samples_taken - 1)) * (s2 - ((s1 * s1) / samples_taken));
+	float I = 1.96 * (sqrt(var / samples_taken));
+	if (I <= maxTolerance * mean) {
+        sampleBuffer.update_pixel(color / samples_taken, x, y);
+        sampleCountBuffer[x + y * sampleBuffer.w] = samples_taken;
+        return;
+	}
+}
+</code>
+</pre>
+				</li>
+				<li>If the function completes the for loop, the pixel did not converge prior to reaching <code>ns_aa</code> samples, so update <code>sampleBuffer</code> and <code>sampleCountBuffer</code> as in part 1</li>
+			</ol>
+
+			<p>Unfortunately, my implementation had a bug somewhere that I was unable to iron out before the assignment dealine, although I suspect it has something to do with my implementation of <code>est_radiance_global_illumination</code>. As a result, I was not able to produce images for this section.</p>
+		</div>
+	</body>
+</html>
