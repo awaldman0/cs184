@@ -27,7 +27,7 @@
 	</head>
 	<body>
 		<div class="container">
-			<h1>CS184/284A Spring 2025 Homework 1 Write-Up</h1>
+			<h1>Project 1: Rasterizer</h1>
 			<div style="text-align: center;">Name: Alexander Waldman </div>
 
 			<br>
@@ -43,7 +43,7 @@
 	-->
 
 			<h2>Overview</h2>
-			<p>In this homework, I implemented many important features of a software rasterizer, including drawing triangles, antialiasing via supersampling, transformations, interpolation within a triangle via barycentric coordinates, texture mapping, and various methods of pixel sampling and level sampling to improve how my program handles textures. Considering the relative simplicity of what I've built, I'm pretty suprised at how powerful/capable my rasterizer is, mainly when it comes to the effectiveness of the antialiasing techniques I implemented. I've gained a much deeper understanding of how geometry is represented in code and how computers can be leveraged to do the heavy lifting in the rasterization process. More specifically, I'm impressed when it comes to all of the interpolation that is done in order to represent things like colors and textures in a triangle. Above all else, I'm shocked at the speed of computers and the sheer number of operations per second being done to display an image on screen, especially as you increase the number of samples per pixel. I found myself very intrigued by the whole texturing process and the different methods of sampling texels and mipmap levels. I'd love to continue exploring that topic as the class continues and see how all of the concepts I've learned extend to 3D.</p>
+			<p>In this project, I implemented many important features of a software rasterizer, including drawing triangles, antialiasing via supersampling, transformations, interpolation within a triangle via barycentric coordinates, texture mapping, and various methods of pixel sampling and level sampling to improve how my program handles textures. Considering the relative simplicity of what I've built, I'm pretty suprised at how powerful/capable my rasterizer is, mainly when it comes to the effectiveness of the antialiasing techniques I implemented. I've gained a much deeper understanding of how geometry is represented in code and how computers can be leveraged to do the heavy lifting in the rasterization process. More specifically, I'm impressed when it comes to all of the interpolation that is done in order to represent things like colors and textures in a triangle. Above all else, I'm shocked at the speed of computers and the sheer number of operations per second being done to display an image on screen, especially as you increase the number of samples per pixel. I found myself very intrigued by the whole texturing process and the different methods of sampling texels and mipmap levels. I'd love to continue exploring that topic as the class continues and see how all of the concepts I've learned extend to 3D.</p>
 			<h2>Task 1: Drawing Single-Color Triangles</h2>
 			When rasterizing triangles for this task, my goal was to take point data and appropriately translate it into graphical data that appears on screen. In doing so, I would use the color data passed into <code>RasterizerImp::rasterize_triangle()</code> to fill in
 			the triangle I was working with. While rasterizing a single triangle does not look very impressive, repeated calls to the function allows me to display a great deal of triangles on screen, giving my rasterizer the ability to represent fairly intricate and
