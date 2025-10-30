@@ -1,89 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Project 1: Rasterizer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-body {
-  background-color: #f8f8f8;
-  font-family: 'Inter', sans-serif;
-  color: #222;
-  margin: 0;
-  padding: 0;
-  line-height: 1.6;
-}
-
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 60px 20px;
-  background-color: white;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
-  border-radius: 12px;
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-h2 {
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 8px;
-  margin-top: 40px;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: zoom-in;
-}
-
-img:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-figure {
-  text-align: center;
-  margin: 20px 0;
-}
-
-figcaption {
-  font-size: 0.9em;
-  color: #666;
-  margin-top: 6px;
-}
-
-/* Lightbox overlay */
-.lightbox {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.8);
-  justify-content: center;
-  align-items: center;
-}
-
-.lightbox img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 8px;
-  cursor: zoom-out;
-}
-
-.lightbox.active {
-  display: flex;
-}
-</style>
-</head>
-<body>
-  <html>
+<html>
 	<head>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -145,7 +60,7 @@ figcaption {
 			Pictured below is a <i>png</i> screenshot of my rasterizer displaying <i>basic/test4.svg</i> with the default viewing parameters with the pixel inspector hovering over an area close to the corner of a very thin triangle.
 
 			<figure>
-				<img src="./images/screenshot_7-7_20-5-30.png" alt="basic/test4.svg" />
+				<img src="./images/screenshot_7-7_20-5-30.png" alt="basic/test4.svg" style="width:400px" />
 				<figcaption>Rasterization of <i>basic/test4.svg</i> without utilizing any antialiasing techniques.</figcaption>
 			</figure>
 
@@ -196,21 +111,21 @@ figcaption {
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-8_18-23-37.png"/>
+							<img src="./images/screenshot_7-8_18-23-37.png" width="400px" />
 							<figcaption>Supersample rate 1 per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-8_18-23-39.png"/>
+							<img src="./images/screenshot_7-8_18-23-39.png" width="400px" />
 							<figcaption>Supersample rate 4 per pixel</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-8_18-23-41.png" />
+							<img src="./images/screenshot_7-8_18-23-41.png" width="400px" />
 							<figcaption>Supersample rate 9 per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-8_18-23-43.png" />
+							<img src="./images/screenshot_7-8_18-23-43.png" width="400px" />
 							<figcaption>Supersample rate 16 per pixel</figcaption>
 						</td>
 					</tr>
@@ -221,7 +136,7 @@ figcaption {
 			After properly implementing transformations, I was able to employ scaling, translation, and rotation operations to alter <i>robot.svg</i> and create something new. I decided to try to make cubeman do some yoga, which I figured would require using all of the transformations I just coded in order to make the pose look right. The screenshot below depicts cubeman in tree pose.
 
 			<figure>
-				<img src="./images/screenshot_7-8_19-48-41.png" />
+				<img src="./images/screenshot_7-8_19-48-41.png" width="400px" />
 				<figcaption>Cubeman doing yoga</figcaption>
 			</figure>
 
@@ -231,18 +146,18 @@ figcaption {
 			In the barycentric coordinate system, each vertex in the triangle is associated with a point <code>(&alpha;, &beta;, &gamma;)</code>. Vertex A is located at <code>(1, 0, 0)</code>, vertex B is located at <code>(0, 1, 0)</code>, and vertex C is located at <code>(0, 0, 1)</code>. An arbitrary point <code>(&alpha;, &beta;, &gamma;)</code> represents a linear interpolation between all 3 vertices at once, and can be converted back to regular coordinates with the following formula: \( (x, y) = &alpha; * A + &beta; * B + &gamma; * C \), where \( &alpha; + &beta; + &gamma; = 1 \).
 			Likewise, we can use this formula to linearly interpolate color data associated with each vertex \( C<sub>(x, y)</sub> = &alpha; * C<sub>A</sub> + &beta; * C<sub>B</sub> + &gamma; * C<sub>C</sub> \). Values for &alpha;, &beta;, and &gamma; can be derived using the positions of the vertices and the current position using the equations below.
 			<figure>
-				<img src="./images/formulas.png" width="600px"/>
+				<img src="./images/formulas.png" width="400px" />
 			</figure>
 
 			All I needed to do was apply these formulas for every sample inside a given triangle, allowing me to represent color gradients. As a result, I was able to mostly reuse my implementation from Task 2, being sure to modify the code where I assign a color to the current location in <code>sample_buffer</code>.
 			<figure>
-				<img src="./images/screenshot_7-9_0-18-4.png"/>
+				<img src="./images/screenshot_7-9_0-18-4.png" width="400px" />
 				<figcaption>Triangle where vertices are colored red, green, and blue respectively</figcaption>
 			</figure>
 			The above image is a good example of how barycentric coordinates can be used to interpolate values within a triangle. When passing the data for this triangle into <code>rasterize_interpolated_color_triangle()</code>, only the vertices had any explicity defined color data, with vertex A, B, and C being colored red, green, and blue respectively. The color for every other pixel is some linear combination of the other three colors, and the use of barycentric coordinates allow for smooth interpolation between all three colors at once. After applying this concept to a single triangle, I was able to rasterize the image below, whose triangles corresponding color data combine to create a color wheel.
 
 			<figure>
-				<img src="./images/screenshot_7-9_0-17-51.png"/>
+				<img src="./images/screenshot_7-9_0-17-51.png" width="400px" />
 				<figcaption>Rasterization of <i>basic/test7.svg</i> with default viewing parameters and supersampling rate 1</figcaption>
 			</figure>
 
@@ -263,11 +178,11 @@ figcaption {
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-10_0-41-0.png" />
+							<img src="./images/screenshot_7-10_0-41-0.png" width="400px" />
 							<figcaption>Swirled Cal seal with nearest-pixel sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-10_0-41-1.png" />
+							<img src="./images/screenshot_7-10_0-41-1.png" width="400px" />
 							<figcaption>Swirled Cal seal with bilinear sampling</figcaption>
 						</td>
 					</tr>
@@ -280,21 +195,21 @@ figcaption {
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-10_0-35-38.png"  />
+							<img src="./images/screenshot_7-10_0-35-38.png" width="400px" />
 							<figcaption>Nearest sampling at 1 sample per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-10_0-35-46.png"/>
+							<img src="./images/screenshot_7-10_0-35-46.png" width="400px" />
 							<figcaption>Nearest sampling at 16 samples per pixel</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-10_0-36-13.png" />
+							<img src="./images/screenshot_7-10_0-36-13.png" width="400px" />
 							<figcaption>Bilinear sampling at 1 sample per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-10_0-36-21.png"  />
+							<img src="./images/screenshot_7-10_0-36-21.png" width="400px" />
 							<figcaption>Bilinear sampling at 16 samples per pixel</figcaption>
 						</td>
 					</tr>
@@ -306,7 +221,7 @@ figcaption {
 			<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
 			When sampling textures in computer graphics, there will most likely not be a 1:1 pixel to texel mapping. This can lead to undesirable outcomes in situations where a low resolution texture is being sampled at a high rate (too blurry) or a high resolution texture is being sampled at a low rate (leads to aliasing). This problem can be especially difficult when the exact same texture is being sampled by triangles at different distances from the camera. One way of solving is this is by creating a mipmap composed of the different versions of same texture, each one sampled at a lower resolution than the last. When it comes time to texturing a specific pixel, one can calculate the local sampling rate by finding the rate of change of u and v around the current pixel. You can then use the formulas below to calculate the mipmap level that corresponds to the local sampling rate.
 			<figure>
-				<img src="./images/formulas2.png" width="600px" />
+				<img src="./images/formulas2.png" width="400px" />
 			</figure>
 			From here, you can implement things like nearest neighbor or linear interpolation to help the rasterizer choose the correct resolution level when sampling a texture. This is called level sampling. In order to implement this myself, I first needed to edit <code>rasterize_textured_triangle</code> to call <code>sample</code>, a more generalized texture sampling function that would take care of level sampling as well as pixel sampling for our texture. I also had to calculate the uv barycentric coordinates of <code>(x+1,y)</code> and <code>(x,y+1)</code> in <code>rasterize_textured_triangle</code>, which were crucial for finding the proper mipmap level. I then implemented <code>get_level</code> (a helper function for <code>sample</code>) according to the spec, which would perform the math shown above to find the mipmap level D that corresponds to a particular <code>(u, v)</code> coordinate. Lastly, I implemented <code>sample</code>, which makes a call to the appropriate sampling function using the correct level given the currently selected pixel sampling and level sampling methods.
 
@@ -327,17 +242,17 @@ figcaption {
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_18-39-1.png"  />
+							<img src="./images/screenshot_7-11_18-39-1.png" width="400px" />
 							<figcaption>L_ZERO level sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_18-39-2.png"  />
+							<img src="./images/screenshot_7-11_18-39-2.png" width="400px" />
 							<figcaption>L_NEAREST level sampling</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_18-39-3.png"  />
+							<img src="./images/screenshot_7-11_18-39-3.png" width="400px" />
 							<figcaption>L_LINEAR level sampling</figcaption>
 						</td>
 					</tr>
@@ -351,21 +266,21 @@ figcaption {
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_19-19-39.png"  />
+							<img src="./images/screenshot_7-11_19-19-39.png" width="400px" />
 							<figcaption>Nearest level sampling and nearest pixel sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_19-19-48.png"  />
+							<img src="./images/screenshot_7-11_19-19-48.png" width="400px" />
 							<figcaption>Nearest level sampling and bilinear pixel sampling</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_19-33-5.png"  />
+							<img src="./images/screenshot_7-11_19-33-5.png" width="400px" />
 							<figcaption>Linear level sampling and nearest pixel sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="./images/screenshot_7-11_19-33-6.png"  />
+							<img src="./images/screenshot_7-11_19-33-6.png" width="400px" />
 							<figcaption>Linear level sampling and bilinear pixel sampling (trilinear sampling/texture filtering)</figcaption>
 						</td>
 					</tr>
@@ -374,23 +289,4 @@ figcaption {
 			<p>When looking at the images above, I find that using linear level sampling and nearest pixel sampling provides the best overall result for this image. Looking at the images that use nearest level sampling, the bourdaries where adjacent mipmap levels are being used is pretty apparant and looks unappealing. If you looks at the center of the image and starts scanning outwards, there are definite jumps in how pixelated the image looks. Each of these jumps represent my rasterizer using a different mipmap level to texture the image. Additionally, the bilinear pixel sampling used in the top right image seems to add a bit of extra blur, making the change in texture resolution especially visible around the edges of the image. Next, we can examine bottom two images, which use linear level sampling. You aren't able to see the transitions bewteen mipmap levels, which is very nice. It seems the image on the bottom right is suffering from a bit of overblur though, which is made evident if you look at the pixel inspector. The image using nearest pixel sampling retains the details of the tops of the trees and the hill in the background but the image using trilinear sampling totally loses those details. As a result, I feel the image that uses linear level sampling and nearest pixel sampling does the best job representing this forest landscape. </p>
 		</div>
 	</body>
-</html>
-
-  <div class="lightbox">
-    <img src="" alt="Expanded view">
-  </div>
-  <script>
-document.querySelectorAll('img').forEach(img => {
-  img.addEventListener('click', e => {
-    const lb = document.querySelector('.lightbox');
-    lb.querySelector('img').src = img.src;
-    lb.classList.add('active');
-  });
-});
-
-document.querySelector('.lightbox').addEventListener('click', () => {
-  document.querySelector('.lightbox').classList.remove('active');
-});
-</script>
-</body>
 </html>
