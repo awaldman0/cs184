@@ -1,37 +1,99 @@
-﻿<html>
+﻿<!DOCTYPE html>
+<html>
 	<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 2: Mesh Editor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+body {
+  background-color: #f8f8f8;
+  font-family: 'Inter', sans-serif;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  background-color: white;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+  border-radius: 12px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+h2 {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-top: 40px;
+}
+
+img {
+  max-width: 90%;
+  height: auto;
+  border-radius: 6px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: zoom-in;
+}
+
+img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+figure {
+  text-align: center;
+  margin: 20px 0;
+}
+
+figcaption {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* Lightbox overlay */
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  cursor: zoom-out;
+}
+
+.lightbox.active {
+  display: flex;
+}
+</style>
+</head>
+	<body>
+		<head>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-		<style>
-			h1 {
-				text-align: center;
-			}
-
-			.container {
-				margin: 0 auto;
-				padding: 60px 20%;
-			}
-
-			figure {
-				text-align: center;
-			}
-
-			img {
-				display: inline-block;
-			}
-
-			body {
-				font-family: 'Inter', sans-serif;
-			}
-		</style>
-	</head>
-	<body>
+		</head>
 		<div class="container">
 			<h1>Project 2: Mesh Editor</h1>
 			<div style="text-align: center;">Name: Alexander Waldman </div>
+			<div style="text-align: center;"><a href = "../">← Back to Homepage</a></div>
 			
 			<figure>
-				<img src="images/intro.png" alt="Teapot" style="width:400px" />
+				<img src="images/intro.png" alt="Teapot" style="width:500px" />
 				<figcaption>A subdivided model of the Utah Teapot with smooth shading applied.</figcaption>
 			</figure>
 
@@ -65,31 +127,31 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task1_1.png" width="400px" />
+							<img src="images/task1_1.png"  />
 							<figcaption>Original control points</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task1_2.png" width="400px" />
+							<img src="images/task1_2.png"  />
 							<figcaption>Evaluation step 1</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task1_3.png" width="400px" />
+							<img src="images/task1_3.png"  />
 							<figcaption>Evaluation step 2</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task1_4.png" width="400px" />
+							<img src="images/task1_4.png"  />
 							<figcaption>Evaluation step 3</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task1_5.png" width="400px" />
+							<img src="images/task1_5.png"  />
 							<figcaption>Evaluation step 4</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task1_6.png" width="400px" />
+							<img src="images/task1_6.png"  />
 							<figcaption>Final evaluated point with completed bézier curve.</figcaption>
 						</td>
 					</tr>
@@ -102,21 +164,21 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task1_7.png" width="400px" />
+							<img src="images/task1_7.png"  />
 							<figcaption><i>t</i> ≈ 0.2</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task1_8.png" width="400px" />
+							<img src="images/task1_8.png"  />
 							<figcaption><i>t</i> ≈ 0.4</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task1_9.png" width="400px" />
+							<img src="images/task1_9.png"  />
 							<figcaption><i>t</i> ≈ 0.6</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task1_10.png" width="400px" />
+							<img src="images/task1_10.png"  />
 							<figcaption><i>t</i> ≈ 0.8</figcaption>
 						</td>
 					</tr>
@@ -172,11 +234,11 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task3_1.png" width="400px" />
+							<img src="images/task3_1.png"  />
 							<figcaption>Teapot with flat shading</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task3_2.png" width="400px" />
+							<img src="images/task3_2.png"  />
 							<figcaption>Teapot with Phong shading enabled</figcaption>
 						</td>
 					</tr>
@@ -194,11 +256,11 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task4_1.png" width="400px" />
+							<img src="images/task4_1.png"  />
 							<figcaption>Teapot before any edge flips</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task4_2.png" width="400px" />
+							<img src="images/task4_2.png"  />
 							<figcaption>Teapot with some flipped edges</figcaption>
 						</td>
 					</tr>
@@ -216,21 +278,21 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task5_1.png" width="400px" />
+							<img src="images/task5_1.png"  />
 							<figcaption><code>dae/torus/input.dae</code> without edge splits</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task5_2.png" width="400px" />
+							<img src="images/task5_2.png"  />
 							<figcaption><code>dae/torus/input.dae</code> with edge splits</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task5_3.png" width="400px" />
+							<img src="images/task5_3.png"  />
 							<figcaption><code>dae/cow.dae</code> without any edge operations</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task5_4.png" width="400px" />
+							<img src="images/task5_4.png"  />
 							<figcaption><code>dae/cow.dae</code> with edge flips and edge splits</figcaption>
 						</td>
 					</tr>
@@ -242,21 +304,21 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task5_5.png" width="400px" />
+							<img src="images/task5_5.png"  />
 							<figcaption>After 1 level of subdivision</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task5_6.png" width="400px" />
+							<img src="images/task5_6.png"  />
 							<figcaption>After 2 levels of subdivision</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task5_7.png" width="400px" />
+							<img src="images/task5_7.png"  />
 							<figcaption>After 3 levels of subdivision</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task5_8.png" width="400px" />
+							<img src="images/task5_8.png"  />
 							<figcaption>After 4 levels of subdivision</figcaption>
 						</td>
 					</tr>
@@ -288,11 +350,11 @@ d->halfedge() = d_to_m;
 					<table style="width: 100%; text-align: center; border-collapse: collapse;">
 						<tr>
 							<td style="text-align: center;">
-								<img src="images/task6_1.png" width="400px" />
+								<img src="images/task6_1.png"  />
 								<figcaption>dae/torus/input.dae with no subdivision</figcaption>
 							</td>
 							<td style="text-align: center;">
-								<img src="images/task6_2.png" width="400px" />
+								<img src="images/task6_2.png"  />
 								<figcaption>dae/torus/input.dae after 3 levels of subdivision</figcaption>
 							</td>
 						</tr>
@@ -303,11 +365,11 @@ d->halfedge() = d_to_m;
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task6_3.png" width="400px" />
+							<img src="images/task6_3.png"  />
 							<figcaption>Mesh with edge splitting around the selected vertex</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task6_4.png" width="400px" />
+							<img src="images/task6_4.png"  />
 							<figcaption>Mesh after 3 levels of subdivision</figcaption>
 						</td>
 					</tr>
@@ -319,21 +381,21 @@ d->halfedge() = d_to_m;
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task6_5.png" width="400px" />
+							<img src="images/task6_5.png"  />
 							<figcaption>Original Mesh<figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task6_6.png" width="400px" />
+							<img src="images/task6_6.png"  />
 							<figcaption>Mesh after 1 level of subdivision</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task6_7.png" width="400px" />
+							<img src="images/task6_7.png"  />
 							<figcaption>Mesh after 2 levels of subdivision</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task6_8.png" width="400px" />
+							<img src="images/task6_8.png"  />
 							<figcaption>Mesh after 3 levels of subdivision</figcaption>
 						</td>
 					</tr>
@@ -344,21 +406,21 @@ d->halfedge() = d_to_m;
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task6_9.png" width="400px" />
+							<img src="images/task6_9.png"  />
 							<figcaption>Mesh with split diagonal edges<figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task6_10.png" width="400px" />
+							<img src="images/task6_10.png"  />
 							<figcaption>Mesh after 1 level of subdivision</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/task6_11.png" width="400px" />
+							<img src="images/task6_11.png"  />
 							<figcaption>Mesh after 2 levels of subdivision</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/task6_12.png" width="400px" />
+							<img src="images/task6_12.png"  />
 							<figcaption>Mesh after 3 levels of subdivision</figcaption>
 						</td>
 					</tr>
@@ -368,3 +430,20 @@ d->halfedge() = d_to_m;
 		</div>
 	</body>
 </html>
+
+<div class="lightbox">
+    <img src="" alt="Expanded view">
+</div>
+<script>
+document.querySelectorAll('img').forEach(img => {
+  img.addEventListener('click', e => {
+    const lb = document.querySelector('.lightbox');
+    lb.querySelector('img').src = img.src;
+    lb.classList.add('active');
+  });
+});
+
+document.querySelector('.lightbox').addEventListener('click', () => {
+  document.querySelector('.lightbox').classList.remove('active');
+});
+</script>

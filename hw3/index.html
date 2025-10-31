@@ -1,35 +1,100 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 3: Physically-Based Renderer with Path Tracing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+body {
+  background-color: #f8f8f8;
+  font-family: 'Inter', sans-serif;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  background-color: white;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+  border-radius: 12px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+h2 {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+  margin-top: 40px;
+}
+
+img {
+  max-width: 90%;
+  height: auto;
+  border-radius: 6px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: zoom-in;
+}
+
+img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+figure {
+  text-align: center;
+  margin: 20px 0;
+}
+
+figcaption {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* Lightbox overlay */
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  cursor: zoom-out;
+}
+
+.lightbox.active {
+  display: flex;
+}
+</style>
+</head>
 	<head>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-		<style>
-			h1 {
-				text-align: center;
-			}
-
-			.container {
-				margin: 0 auto;
-				padding: 60px 20%;
-			}
-
-			figure {
-				text-align: center;
-			}
-
-			img {
-				display: inline-block;
-			}
-
-			body {
-				font-family: 'Inter', sans-serif;
-			}
-		</style>
 	</head>
 	<body>
 		<div class="container">
 			<h1>Project 3: Physically-Based Renderer with Path Tracing</h1>
 			<div style="text-align: center;">Name: Alexander Waldman </div>
-
+			<div style="text-align: center;"><a href = "../">← Back to Homepage</a></div>
+			<figure>
+				<img src="images/part4_15.png" alt="Bunny" style="width:500px" />
+				<figcaption>Bunny lit with global illumination</figcaption>
+			</figure>
 			<!--
 	We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 	-->
@@ -43,21 +108,21 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part1_1.png" width="400px" />
+							<img src="images/part1_1.png"  />
 							<figcaption>dae/sky/CBgems.dae</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part1_2.png" width="400px" />
+							<img src="images/part1_2.png"  />
 							<figcaption>dae/sky/CBcoil.dae</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part1_3.png" width="400px" />
+							<img src="images/part1_3.png"  />
 							<figcaption>dae/meshedit/teapot.dae</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part1_4.png" width="400px" />
+							<img src="images/part1_4.png"  />
 							<figcaption>dae/keenan/banana.dae</figcaption>
 						</td>
 					</tr>
@@ -87,21 +152,21 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part2_1.png" width="400px" />
+							<img src="images/part2_1.png"  />
 							<figcaption>64,618 primitives, 0.0728 seconds to render</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part2_2.png" width="400px" />
+							<img src="images/part2_2.png"  />
 							<figcaption>100,012 primitives, 0.1625 seconds to render</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part2_3.png" width="400px" />
+							<img src="images/part2_3.png"  />
 							<figcaption>196,608 primitives, 0.1698 seconds to render</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part2_4.png" width="400px" />
+							<img src="images/part2_4.png"  />
 							<figcaption>240,326 primitives, 0.1948 seconds to render</figcaption>
 						</td>
 					</tr>
@@ -158,31 +223,31 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part3_1.png" width="400px" />
+							<img src="images/part3_1.png"  />
 							<figcaption>Uniform Hemisphere Sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part3_2.png" width="400px" />
+							<img src="images/part3_2.png"  />
 							<figcaption>Light Sampling</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part3_3.png" width="400px" />
+							<img src="images/part3_3.png"  />
 							<figcaption>Uniform Hemisphere Sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part3_4.png" width="400px" />
+							<img src="images/part3_4.png"  />
 							<figcaption>Light Sampling</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part3_5.png" width="400px" />
+							<img src="images/part3_5.png"  />
 							<figcaption>Uniform Hemisphere Sampling</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part3_6.png" width="400px" />
+							<img src="images/part3_6.png"  />
 							<figcaption>Light Sampling</figcaption>
 						</td>
 					</tr>
@@ -193,21 +258,21 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part3_7.png" width="400px" />
+							<img src="images/part3_7.png"  />
 							<figcaption>1 light ray</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part3_8.png" width="400px" />
+							<img src="images/part3_8.png"  />
 							<figcaption>4 light rays</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part3_9.png" width="400px" />
+							<img src="images/part3_9.png"  />
 							<figcaption>16 light rays</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part3_10.png" width="400px" />
+							<img src="images/part3_10.png"  />
 							<figcaption>64 light rays</figcaption>
 						</td>
 					</tr>
@@ -232,11 +297,11 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_1.png" width="400px" />
+							<img src="images/part4_1.png"  />
 							<figcaption>dae/sky/CBspheres_lambertian.dae</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_2.png" width="400px" />
+							<img src="images/part4_2.png"  />
 							<figcaption>dae/sky/CBcoil.dae</figcaption>
 						</td>
 					</tr>
@@ -247,11 +312,11 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_3.png" width="400px" />
+							<img src="images/part4_3.png"  />
 							<figcaption>direct illumination only</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_3b.png" width="400px" />
+							<img src="images/part4_3b.png"  />
 							<figcaption>indirect illumination only</figcaption>
 						</td>
 					</tr>
@@ -262,53 +327,53 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_4.png" width="135px" />
+							<img src="images/part4_4.png"  />
 							<figcaption>m=0</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_5.png" width="135px" />
+							<img src="images/part4_5.png"  />
 							<figcaption>m=1</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_6.png" width="135px" />
+							<img src="images/part4_6.png"  />
 							<figcaption>m=2</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_7.png" width="135px" />
+							<img src="images/part4_7.png"  />
 							<figcaption>m=3</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_8.png" width="135px" />
+							<img src="images/part4_8.png"  />
 							<figcaption>m=4</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_9.png" width="135px" />
+							<img src="images/part4_9.png"  />
 							<figcaption>m=5</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_10.png" width="135px" />
+							<img src="images/part4_10.png"  />
 							<figcaption>m=0</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_11.png" width="135px" />
+							<img src="images/part4_11.png"  />
 							<figcaption>m=1</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_12.png" width="135px" />
+							<img src="images/part4_12.png"  />
 							<figcaption>m=2</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_13.png" width="135px" />
+							<img src="images/part4_13.png"  />
 							<figcaption>m=3</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_14.png" width="135px" />
+							<img src="images/part4_14.png"  />
 							<figcaption>m=4</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_15.png" width="135px" />
+							<img src="images/part4_15.png"  />
 							<figcaption>m=5</figcaption>
 						</td>
 					</tr>
@@ -320,31 +385,31 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_16.png" width="400px" />
+							<img src="images/part4_16.png"  />
 							<figcaption>m=0</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_17.png" width="400px" />
+							<img src="images/part4_17.png"  />
 							<figcaption>m=1</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_18.png" width="400px" />
+							<img src="images/part4_18.png"  />
 							<figcaption>m=2</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_19.png" width="400px" />
+							<img src="images/part4_19.png"  />
 							<figcaption>m=3</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_20.png" width="400px" />
+							<img src="images/part4_20.png"  />
 							<figcaption>m=4</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_21.png" width="400px" />
+							<img src="images/part4_21.png"  />
 							<figcaption>m=100</figcaption>
 						</td>
 					</tr>
@@ -356,41 +421,41 @@
 				<table style="width: 100%; text-align: center; border-collapse: collapse;">
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_22.png" width="400px" />
+							<img src="images/part4_22.png"  />
 							<figcaption>1 sample per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_23.png" width="400px" />
+							<img src="images/part4_23.png"  />
 							<figcaption>2 samples per pixel</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_24.png" width="400px" />
+							<img src="images/part4_24.png"  />
 							<figcaption>4 samples per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_25.png" width="400px" />
+							<img src="images/part4_25.png"  />
 							<figcaption>8 samples per pixel</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_26.png" width="400px" />
+							<img src="images/part4_26.png"  />
 							<figcaption>16 samples per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_27.png" width="400px" />
+							<img src="images/part4_27.png"  />
 							<figcaption>64 samples per pixel</figcaption>
 						</td>
 					</tr>
 					<tr>
 						<td style="text-align: center;">
-							<img src="images/part4_28.png" width="400px" />
+							<img src="images/part4_28.png"  />
 							<figcaption>256 samples per pixel</figcaption>
 						</td>
 						<td style="text-align: center;">
-							<img src="images/part4_29.png" width="400px" />
+							<img src="images/part4_29.png"  />
 							<figcaption>1024 samples per pixel</figcaption>
 						</td>
 					</tr>
@@ -425,3 +490,20 @@ if (samples_taken > 1 && samples_taken % samplesPerBatch == 0) {
 		</div>
 	</body>
 </html>
+
+<div class="lightbox">
+    <img src="" alt="Expanded view">
+</div>
+<script>
+document.querySelectorAll('img').forEach(img => {
+  img.addEventListener('click', e => {
+    const lb = document.querySelector('.lightbox');
+    lb.querySelector('img').src = img.src;
+    lb.classList.add('active');
+  });
+});
+
+document.querySelector('.lightbox').addEventListener('click', () => {
+  document.querySelector('.lightbox').classList.remove('active');
+});
+</script>
